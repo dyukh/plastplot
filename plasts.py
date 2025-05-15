@@ -1,4 +1,5 @@
 import numpy as np
+import re
 
 def read_data_file(file_path):
     with open(file_path, 'r') as file:
@@ -12,7 +13,7 @@ def read_data_file(file_path):
 
     # Извлечение параметров из заголовка
     model_number = int(header[3].strip())
-    radius_points, angle_points = map(int, header[4].split())
+    radius_points, angle_points = map(int, re.split(r'[, ]+', header[4]))
     N = radius_points
     K = angle_points
 
