@@ -12,6 +12,7 @@ def read_data_file(file_path):
         header.append(line)
 
     # Извлечение параметров из заголовка
+    start_depth = float(header[1].strip())
     model_number = int(header[3].strip())
     radius_points, angle_points = map(int, re.split(r'[, ]+', header[4]))
     N = radius_points
@@ -60,11 +61,26 @@ def read_data_file(file_path):
 
     return {
         'header': header,
+        'start_depth': start_depth,
         'model_number': model_number,
         'radius_points': radius_points,
         'angle_points': angle_points,
         'blocks': blocks
     }
+
+def data_to_xyz(data):
+    start_depth = data['start_depth']
+    Y = [start_depth]
+    Z = []
+    for i, block in enumerate(data['blocks']):
+        Y.append(Y[-1]+block['thickness'])
+        Z.append(block['data'][:,1])
+
+    Z = np.array(Z).T
+
+    X = [float(row[0]) for row in data['blocks'][0]['data'] ]
+    X.insert(0, 0.0)
+    return X, Y, Z
 
 # Пример использования
 file_path = 'data/Pl2_res_vik2.txt'
@@ -74,9 +90,25 @@ data = read_data_file(file_path)
 print(f"Количество блоков: {data['model_number']}")
 print(f"Количество точек по радиусу: {data['radius_points']}")
 print(f"Количество точек по углу: {data['angle_points']}")
+print(f"Header: {data['header']}")
+
 for i, block in enumerate(data['blocks']):
     print(f"\nБлок {i + 1}:")
     print(f"  Толщина: {block['thickness']}")
     print(f"  Идентификатор: {block['identifier']}")
     print(f"  Углы: {block['angles']}")
     print(f"  Данные (размер): {block['data'].shape}")
+
+
+x, y, Z = data_to_xyz(data)
+
+import matplotlib.pyplot as plt
+import numpy as np
+
+plt.style.use('_mpl-gallery-nogrid')
+X, Y = np.meshgrid(x, y)
+fig, ax = plt.subplots()
+
+ax.pcolormesh(X, Y, Z, vmin=-0.5, vmax=1.0)
+
+plt.show()
